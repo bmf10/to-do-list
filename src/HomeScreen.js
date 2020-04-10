@@ -16,13 +16,32 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import SyncStorage from 'sync-storage';
 
 class Home extends Component {
-  state = {
-    time: '',
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      time: '',
+      nameModal: '',
+      name: '',
+      inputName: ''
+    };
+  }
+
+  handlerName = () => {
+    let data = SyncStorage.get('name');
+    if (!data) {
+      this.setState({
+        nameModal: true
+      })
+    } else {
+      this.setState({
+        name: data
+      })
+    }
+  }
 
   handlerTime = () => {
     let date = new Date().getHours();
-    if (date < 10 || date < 5) {
+    if (date < 10) {
       this.setState({
         time: 'Good Morning',
       });
@@ -33,6 +52,10 @@ class Home extends Component {
     } else if (date < 19) {
       this.setState({
         time: 'Good Evening',
+      });
+    } else if (date < 5) {
+      this.setState({
+        time: 'Good Night',
       });
     } else {
       this.setState({
@@ -47,11 +70,12 @@ class Home extends Component {
         text: 'Yes',
         onPress: () => {
           ToastAndroid.showWithGravity(
-            'Please Wait...',
-            ToastAndroid.LONG,
+            'With Pleasure!',
+            ToastAndroid.SHORT,
             ToastAndroid.BOTTOM,
           );
           SyncStorage.remove('start');
+          SyncStorage.remove('name');
           this.props.navigation.replace('Splash');
         },
       },
@@ -61,11 +85,9 @@ class Home extends Component {
     ]);
   };
 
-  handlerAction = () => {
-  };
-
   componentDidMount() {
     this.handlerTime();
+    this.handlerName();
     BackHandler.addEventListener("hardwareBackPress", this.handleBack);
   }
 
@@ -84,13 +106,24 @@ class Home extends Component {
     return true;
   }
 
+  handleInputName() {
+    if (this.state.inputName) {
+      console.log(this.state.inputName)
+      SyncStorage.set('name', this.state.inputName);
+      this.setState({
+        name: this.state.inputName,
+        nameModal: false,
+      })
+    }
+  }
+
   render() {
     const modalName = (
-      <Modal visible={false} transparent={true} animated="fade">
+      <Modal visible={this.state.nameModal} onRequestClose={() => this.handleBack()} transparent={true} animated="fade">
         <View style={styles.modalName}>
           <Text style={styles.nameLabel}>What is your name?</Text>
-          <TextInput placeholder="Insert your name" style={styles.nameInput} />
-          <TouchableOpacity style={styles.button}>
+          <TextInput onChangeText={(e) => this.setState({ inputName: e })} placeholder="Insert your name" style={styles.nameInput} />
+          <TouchableOpacity onPress={() => this.handleInputName()} style={styles.button}>
             <Text style={styles.buttonText}>Okey, Let's Go</Text>
           </TouchableOpacity>
         </View>
@@ -102,7 +135,7 @@ class Home extends Component {
         <StatusBar translucent backgroundColor="#ff8b0d" />
         <View style={styles.headerContainer}>
           <Text style={styles.headerText}>
-            {this.state.time}, Bima Febriansyah
+            {this.state.time}, {this.state.name}
           </Text>
           <TouchableOpacity
             onPress={() => this.handlerReset()}
@@ -169,7 +202,7 @@ class Home extends Component {
 const styles = StyleSheet.create({
   modalName: {
     top: '10%',
-    height: '30%',
+    height: 250,
     width: '80%',
     backgroundColor: '#ff8b0d',
     alignSelf: 'center',
@@ -183,6 +216,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
 
     elevation: 5,
+    justifyContent: "space-evenly"
   },
   nameInput: {
     alignSelf: 'center',
@@ -229,7 +263,7 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: 'bold',
     width: '80%',
-    lineHeight: 30,
+    lineHeight: 40,
     textAlign: 'left',
   },
   headerIcon: {
